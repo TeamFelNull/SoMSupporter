@@ -1,5 +1,6 @@
 package dev.felnull.somsupporter;
 
+import dev.felnull.somsupporter.config.KeyBindings;
 import dev.felnull.somsupporter.sound.SomsoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -29,5 +30,8 @@ public class Somsupporter {
 
     public Somsupporter() {
         SomsoundEvents.SOUNDS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((FMLClientSetupEvent e) -> {
+            KeyBindings.register();
+        });
     }
 }
