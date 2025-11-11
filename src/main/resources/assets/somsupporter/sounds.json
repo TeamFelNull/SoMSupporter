@@ -1,0 +1,8 @@
+{
+  "notify_lowchance": {
+    "category": "master",
+    "sounds": [
+      { "name": "somsupporter:notify_lowchance", "stream": false }
+    ]
+  }
+}
