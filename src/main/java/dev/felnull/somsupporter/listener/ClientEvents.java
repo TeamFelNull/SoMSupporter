@@ -59,7 +59,7 @@ public class ClientEvents {
                 } catch (NumberFormatException ignored) {}
             }
             // 何かしら%が見つかって、最小値が1未満なら通知＆音
-            if (any && min < 1.0) {
+            if (any && min <= 5.0) {
                 // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
                 int endIdx = s.indexOf(']');
                 String title = (endIdx > 1) ? s.substring(0, endIdx + 1) : s;
