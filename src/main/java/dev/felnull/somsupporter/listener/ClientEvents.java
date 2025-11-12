@@ -9,13 +9,19 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Somsupporter.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientEvents {
+    private static List<String> notifierBlackList;
+    public ClientEvents() {
+        notifierBlackList = Arrays.asList(
+                "ブラックストーン",
+                "砂の記憶"
+        );
+    }
 
     static class Hit {
         final long tMs;
@@ -63,6 +69,11 @@ public class ClientEvents {
                 // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
                 int endIdx = s.indexOf(']');
                 String title = (endIdx > 1) ? s.substring(0, endIdx + 1) : s;
+
+                if(notifierBlackList.contains(title)){ //ブラックリストアイテム除外
+                    return;
+                }
+
                 Notifier.push(String.format("%s 低確率: %.2f%%", title, min));
 
                 // 効果音（UIトースト音など好みで）
