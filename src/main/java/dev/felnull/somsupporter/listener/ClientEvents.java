@@ -15,11 +15,16 @@ import java.util.regex.Pattern;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Somsupporter.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientEvents {
-    private static List<String> notifierBlackList;
-    public ClientEvents() {
+    private static final List<String> notifierBlackList;
+    private static final List<String> specialItemList;
+    static{
         notifierBlackList = Arrays.asList(
                 "ブラックストーン",
                 "砂の記憶"
+        );
+        specialItemList = Arrays.asList(
+                "異物混入―紅―",
+                "異物混入―蒼―"
         );
     }
 
@@ -65,11 +70,10 @@ public class ClientEvents {
                 } catch (NumberFormatException ignored) {}
             }
             // 何かしら%が見つかって、最小値が1未満なら通知＆音
-            if (any && min <= 5.0) {
-                // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
-                int endIdx = s.indexOf(']');
-                String title = (endIdx > 1) ? s.substring(0, endIdx + 1) : s;
-
+            // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
+            int endIdx = s.indexOf(']');
+            String title = (endIdx > 1) ? s.substring(0, endIdx + 1) : s;
+            if ((any && min <= 5.0) || specialItemList.contains(title)) {
                 if(notifierBlackList.contains(title)){ //ブラックリストアイテム除外
                     return;
                 }
