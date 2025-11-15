@@ -20,7 +20,9 @@ public class ClientEvents {
     static{
         notifierBlackList = Arrays.asList(
                 "ブラックストーン",
-                "砂の記憶"
+                "砂の記憶",
+                "星の欠片",
+                "星"
         );
         specialItemList = Arrays.asList(
                 "異物混入―紅―",
@@ -71,8 +73,8 @@ public class ClientEvents {
             }
             // 何かしら%が見つかって、最小値が1未満なら通知＆音
             // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
-            int endIdx = s.indexOf(']');
-            String title = (endIdx > 1) ? s.substring(0, endIdx + 1) : s;
+            int endIdx = s.indexOf(']') ;
+            String title = (endIdx > 1) ? s.substring("+[".length(), endIdx) : s;
             if ((any && min <= 5.0) || specialItemList.contains(title)) {
                 if(notifierBlackList.contains(title)){ //ブラックリストアイテム除外
                     return;
