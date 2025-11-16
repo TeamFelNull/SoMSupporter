@@ -2,10 +2,20 @@ package dev.felnull.somsupporter.listener;
 
 import dev.felnull.somsupporter.Notifier;
 import dev.felnull.somsupporter.Somsupporter;
+import dev.felnull.somsupporter.gui.ConfirmEarlyLogoutScreen;
 import dev.felnull.somsupporter.sound.SomsoundEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screen.IngameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -44,11 +54,16 @@ public class ClientEvents {
     private static final Pattern PCT_IN_BRACKETS = Pattern.compile("\\[(\\d+(?:\\.\\d+)?)%\\]");
 
     // === 状態 ===
+    //・チャット系
     private static final Deque<Hit> ring = new ArrayDeque<>();
     private static double sessionTotal = 0.0;
     private static Long sessionStartMs = null;
     private static long lastSoundTime = 0L;
     private static final long SOUND_COOLDOWN_MS = 3000;
+
+    //・ログイン処理系
+    private static long loginTimeMs = 0L;
+    private static final long DANGER_MS = 10_000L; // 10秒以内は危険扱い
 
     // === 入口: チャット受信 ===
     @SubscribeEvent
@@ -160,4 +175,66 @@ public class ClientEvents {
         sessionTotal = 0.0;
         sessionStartMs = null;
     }
+
+    // === ログイン処理 ===
+    @SubscribeEvent
+    public static void onClientLogin(ClientPlayerNetworkEvent.LoggedInEvent e) {
+        loginTimeMs = System.currentTimeMillis();
+    }
+
+    private static boolean shouldWarnOnLogout() {
+        if (loginTimeMs == 0L) return false;
+        long elapsed = System.currentTimeMillis() - loginTimeMs;
+        return elapsed <= DANGER_MS;
+    }
+
+    @SubscribeEvent
+    public static void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
+        Screen gui = event.getGui();
+
+        // ESCメニュー以外は無視
+        if (!(gui instanceof IngameMenuScreen)) return;
+
+        // ログインから10秒を過ぎてたら警告しない
+        if (!shouldWarnOnLogout()) return;
+
+        // ローカライズされた「切断」文字列（日本語環境なら「切断」になる）
+        String disconnectText = I18n.get("menu.disconnect");
+
+        Widget target = null;
+        for (Widget w : event.getWidgetList()) {
+            if (w instanceof Button) {
+                ITextComponent msg = w.getMessage();
+                if (disconnectText.equals(msg.getString())) {
+                    target = w;
+                    break;
+                }
+            }
+        }
+
+        if (target == null) {
+            return; // ボタン見つからなかった
+        }
+
+        // 元の「切断」ボタンを削除
+        event.removeWidget(target);
+
+        Button old = (Button) target;
+
+        // 同じ位置・サイズ・ラベルのボタンを自前で追加
+        Button wrapped = new Button(
+                old.x,
+                old.y,
+                old.getWidth(),
+                old.getHeight(),
+                old.getMessage(),
+                b -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.setScreen(new ConfirmEarlyLogoutScreen(gui));
+                }
+        );
+
+        event.addWidget(wrapped);
+    }
+
 }
