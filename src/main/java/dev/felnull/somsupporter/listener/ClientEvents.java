@@ -5,6 +5,7 @@ import dev.felnull.somsupporter.Somsupporter;
 import dev.felnull.somsupporter.gui.ConfirmEarlyLogoutScreen;
 import dev.felnull.somsupporter.sound.SomsoundEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.screen.IngameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.Widget;
@@ -102,7 +103,7 @@ public class ClientEvents {
                 if (mc.player != null) {
                     long now = System.currentTimeMillis();
                     if (now - lastSoundTime > SOUND_COOLDOWN_MS) {
-                        mc.player.playSound(SomsoundEvents.NOTIFY_LOWCHANCE.get(), 1.0F, 1.0F);
+                        mc.getSoundManager().play(SimpleSound.forUI(SomsoundEvents.NOTIFY_LOWCHANCE.get(), 1.5F, 1.0F));
                         lastSoundTime = now;
                     }
                 }
