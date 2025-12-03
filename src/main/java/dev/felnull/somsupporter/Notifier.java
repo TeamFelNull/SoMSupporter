@@ -16,7 +16,7 @@ public class Notifier extends AbstractGui {
         Toast(String t, long u){ this.text = t; this.untilMs = u; }
     }
     private static final List<Toast> TOASTS = new ArrayList<>();
-    private static final int DURATION_MS = 3000; // 3秒表示
+    private static final int DURATION_MS = 10000; // 3秒表示
     private static final int BG = 0x88000000;    // 半透明黒
     private static final int BORDER = 0xFFFFFFFF;
     private static final int TEXT = 0xFFFFFFFF;
