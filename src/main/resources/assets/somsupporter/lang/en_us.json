@@ -1,4 +1,8 @@
 {
   "key.categories.somsupporter": "SomSupporter",
-  "key.somsupporter.run_command": "Open Backpack"
+  "key.somsupporter.open_backpack": "Open Backpack",
+  "key.somsupporter.open_trash": "Open Trash",
+  "key.somsupporter.quick_party_create": "Create Party",
+  "key.somsupporter.quick_party_invite": "Party Invite",
+  "key.somsupporter.open_party_settings": "Party Settings"
 }

@@ -15,15 +15,40 @@ public enum KeyBind {
             KeyModifier.NONE,
             InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_B), // デフォルトBキー
             "key.categories.somsupporter")            // 設定画面カテゴリ
-            ),
+    ),
     OPEN_TRASH(
             new KeyBinding(
             "key.somsupporter.open_trash",          // 表示名（langファイルで翻訳可）
             KeyConflictContext.IN_GAME,              // ゲーム内のみ
             KeyModifier.NONE,
             InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_DELETE), // デフォルトDeleteキー
-            "key.categories.somsupporter"            // 設定画面カテゴリ
-    ));
+            "key.categories.somsupporter")            // 設定画面カテゴリ
+    ),
+    QUICK_PARTY_CREATE(
+            new KeyBinding(
+                    "key.somsupporter.quick_party_create",          // 表示名（langファイルで翻訳可）
+                    KeyConflictContext.IN_GAME,              // ゲーム内のみ
+                    KeyModifier.NONE,
+                    InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_O), // デフォルトDeleteキー
+                    "key.categories.somsupporter")            // 設定画面カテゴリ
+    ),
+    QUICK_PARTY_INVITE(
+            new KeyBinding(
+                    "key.somsupporter.quick_party_invite",          // 表示名（langファイルで翻訳可）
+                    KeyConflictContext.IN_GAME,              // ゲーム内のみ
+                    KeyModifier.NONE,
+                    InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_I), // デフォルトDeleteキー
+                    "key.categories.somsupporter")            // 設定画面カテゴリ
+    ),
+    OPEN_PARTY_SETTINGS(
+            new KeyBinding(
+                    "key.somsupporter.open_party_settings",
+                    KeyConflictContext.IN_GAME,
+                    KeyModifier.NONE,
+                    InputMappings.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_P),
+                    "key.categories.somsupporter"
+            )
+    );
 
     private KeyBinding keyBinding;
 

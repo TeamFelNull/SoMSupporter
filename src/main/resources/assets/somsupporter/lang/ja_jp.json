@@ -1,4 +1,8 @@
 {
   "key.categories.somsupporter": "SomSupporter",
-  "key.somsupporter.run_command": "バックパックを開く"
+  "key.somsupporter.open_backpack": "バックパックを開く",
+  "key.somsupporter.open_trash": "ゴミ箱を開く",
+  "key.somsupporter.quick_party_create": "パーティを作成ショートカット",
+  "key.somsupporter.quick_party_invite": "パーティ招待ショートカット",
+  "key.somsupporter.open_party_settings": "パーティ設定画面表示"
 }
