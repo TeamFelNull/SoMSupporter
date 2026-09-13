@@ -1,16 +1,16 @@
 package dev.felnull.somsupporter;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Somsupporter.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class HudPanelRenderer extends AbstractGui {
+public class HudPanelRenderer {
 
     private static int panelX = 8;
     private static int panelY = 28;
@@ -19,75 +19,59 @@ public class HudPanelRenderer extends AbstractGui {
 
     private static boolean visible = true;
 
-    private static final int BG_COLOR     = 0x33000000;
+    private static final int BG_COLOR          = 0x33000000;
     private static final int MAIN_BORDER_COLOR = 0x11FFFFFF;
-    private static final int TITLE_COLOR  = 0xFF66CCFF;
-    private static final int TEXT_COLOR   = 0xFFFFFFFF;
+    private static final int TITLE_COLOR       = 0xFF66CCFF;
+    private static final int TEXT_COLOR        = 0xFFFFFFFF;
 
     @SubscribeEvent
-    public static void onRender(RenderGameOverlayEvent.Post e) {
+    public static void onRender(RenderGuiOverlayEvent.Post e) {
         if (!visible) return;
-        if (e.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
+
+        // 描画タイミングの判定（旧 RenderGameOverlayEvent.ElementType.ALL 相当）
+        // 画面全体のオーバーレイ描画が終わるタイミング（HOTBAR など）を判定
+        if (!e.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) return;
 
         Minecraft mc = Minecraft.getInstance();
-        FontRenderer fr = mc.font;
+        Font fr = mc.font;
 
-        MatrixStack ms = e.getMatrixStack();
+        // 1.20.4 では描画オブジェクトとして GuiGraphics を使用
+        GuiGraphics guiGraphics = e.getGuiGraphics();
 
         // 画面サイズ取得
-        int sw = mc.getWindow().getGuiScaledWidth();   // getMainWindow() → getWindow()
+        int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();
 
         int x = Math.max(0, Math.min(panelX, sw - panelW));
         int y = Math.max(0, Math.min(panelY, sh - panelH));
 
-        fill(ms, x, y, x + panelW, y + panelH, BG_COLOR);
-        drawBorder(ms, x, y, panelW, panelH, MAIN_BORDER_COLOR);
+        // GuiGraphics#fill を直接呼び出し
+        guiGraphics.fill(x, y, x + panelW, y + panelH, BG_COLOR);
+        drawBorder(guiGraphics, x, y, panelW, panelH, MAIN_BORDER_COLOR);
 
         int tx = x + 6;
         int ty = y + 6;
 
-        fr.draw(ms, "DPS Checker", tx, ty, TITLE_COLOR);
+        // 文字描画: fr.draw(...) -> guiGraphics.drawString(font, text, x, y, color, dropShadow)
+        guiGraphics.drawString(fr, "DPS Checker", tx, ty, TITLE_COLOR, false);
         ty += 12;
+
         double dpsW  = DpsNumbers.getWindowDps();
         double dpsS  = DpsNumbers.getSessionDps();
         double total = DpsNumbers.getSessionTotal();
 
-        fr.draw(ms, String.format("10秒平均:  %.1f DPS", dpsW), tx, ty, TEXT_COLOR); ty += 10;
-        fr.draw(ms, String.format("攻撃中平均: %.1f DPS", dpsS), tx, ty, TEXT_COLOR); ty += 10;
-        fr.draw(ms, String.format("Total:   %.0f", total),   tx, ty, TEXT_COLOR);
+        guiGraphics.drawString(fr, String.format("10秒平均:  %.1f DPS", dpsW), tx, ty, TEXT_COLOR, false); ty += 10;
+        guiGraphics.drawString(fr, String.format("攻撃中平均: %.1f DPS", dpsS), tx, ty, TEXT_COLOR, false); ty += 10;
+        guiGraphics.drawString(fr, String.format("Total:   %.0f", total),   tx, ty, TEXT_COLOR, false);
 
-        Notifier.render(e.getMatrixStack());
+        // Notifier 側の引数も GuiGraphics に合わせて更新してください
+        Notifier.render(guiGraphics);
     }
 
-    private static void drawBorder(MatrixStack ms, int x, int y, int w, int h, int color) {
-        fill(ms, x, y, x + w, y + 1, color);
-        fill(ms, x, y + h - 1, x + w, y + h, color);
-        fill(ms, x, y, x + 1, y + h, color);
-        fill(ms, x + w - 1, y, x + w, y + h, color);
+    private static void drawBorder(GuiGraphics guiGraphics, int x, int y, int w, int h, int color) {
+        guiGraphics.fill(x, y, x + w, y + 1, color);
+        guiGraphics.fill(x, y + h - 1, x + w, y + h, color);
+        guiGraphics.fill(x, y, x + 1, y + h, color);
+        guiGraphics.fill(x + w - 1, y, x + w, y + h, color);
     }
-    /**
-    @SubscribeEvent
-    public static void onKey(InputEvent.KeyInputEvent e) {
-        final int PRESS = 1;
-        if (e.getAction() != PRESS) return;
-
-        final int KEY_LEFT  = 263, KEY_RIGHT = 262, KEY_UP = 265, KEY_DOWN = 264;
-        final int KEY_H = 72, KEY_R = 82;
-
-        if (e.getKey() == KEY_H) {
-            visible = !visible;
-        } else if (e.getKey() == KEY_R) {
-            DpsNumbers.resetSession();
-        } else if (e.getKey() == KEY_LEFT) {
-            panelX -= 2;
-        } else if (e.getKey() == KEY_RIGHT) {
-            panelX += 2;
-        } else if (e.getKey() == KEY_UP) {
-            panelY -= 2;
-        } else if (e.getKey() == KEY_DOWN) {
-            panelY += 2;
-        }
-    }
-    **/
 }

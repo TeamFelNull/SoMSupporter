@@ -1,18 +1,27 @@
 package dev.felnull.somsupporter.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.DirtMessageScreen;
-import net.minecraft.client.gui.screen.MainMenuScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class ConfirmEarlyLogoutScreen extends Screen {
     private final Screen parent;
 
     public ConfirmEarlyLogoutScreen(Screen parent) {
-        super(new StringTextComponent("ログアウト確認"));
+        // StringTextComponent -> Component.literal
+        super(Component.literal("ログアウト確認"));
         this.parent = parent;
     }
 
@@ -21,48 +30,59 @@ public class ConfirmEarlyLogoutScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        this.addButton(new Button(
-                centerX - 105, centerY + 10,
-                100, 20,
-                new StringTextComponent("キャンセル"),
-                b -> Minecraft.getInstance().setScreen(parent)
-        ));
+        // 1.20.4 では Button.builder を使用してボタンを作成します
+        // addButton -> addRenderableWidget に変更
+        this.addRenderableWidget(
+                Button.builder(Component.literal("キャンセル"), b -> {
+                            if (this.minecraft != null) {
+                                this.minecraft.setScreen(parent);
+                            }
+                        })
+                        .bounds(centerX - 105, centerY + 10, 100, 20)
+                        .build()
+        );
 
-        this.addButton(new Button(
-                centerX + 5, centerY + 10,
-                100, 20,
-                new StringTextComponent("OK"),
-                b -> doLogout()
-        ));
+        this.addRenderableWidget(
+                Button.builder(Component.literal("OK"), b -> doLogout())
+                        .bounds(centerX + 5, centerY + 10, 100, 20)
+                        .build()
+        );
     }
 
     @Override
-    public void render(com.mojang.blaze3d.matrix.MatrixStack matrixStack,
-                       int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
-        drawCenteredString(matrixStack, this.font,
-                "本当にログアウトしますか？", this.width / 2, this.height / 2 - 30, 0xFFFFFF);
-        drawCenteredString(matrixStack, this.font,
-                "データが消失する可能性があります！", this.width / 2, this.height / 2 - 18, 0xFF5555);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        // 1.20.4 の背景描画処理 (MatrixStack から GuiGraphics に変更)
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
+
+        // drawCenteredString -> guiGraphics.drawCenteredString
+        guiGraphics.drawCenteredString(
+                this.font,
+                "本当にログアウトしますか？",
+                this.width / 2,
+                this.height / 2 - 30,
+                0xFFFFFF
+        );
+
+        guiGraphics.drawCenteredString(
+                this.font,
+                "データが消失する可能性があります！",
+                this.width / 2,
+                this.height / 2 - 18,
+                0xFF5555
+        );
+
+        // ボタン等のコンポーネント描画
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
     }
 
     private void doLogout() {
         Minecraft mc = Minecraft.getInstance();
-        boolean integrated = mc.isLocalServer();
 
         if (mc.level != null) {
-            mc.level.disconnect();
+            mc.disconnect(new GenericDirtMessageScreen(Component.translatable("menu.savingLevel")));
         }
 
-        if (integrated) {
-            mc.clearLevel(new DirtMessageScreen(
-                    new TranslationTextComponent("menu.savingLevel")));
-        } else {
-            mc.clearLevel();
-        }
-
-        mc.setScreen(new MainMenuScreen());
+        mc.setScreen(new TitleScreen());
     }
 
     @Override

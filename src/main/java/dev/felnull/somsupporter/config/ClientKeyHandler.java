@@ -1,10 +1,8 @@
 package dev.felnull.somsupporter.config;
 
 import dev.felnull.somsupporter.Somsupporter;
-import dev.felnull.somsupporter.feature.party.PartyActions;
-import dev.felnull.somsupporter.gui.PartyMainScreen;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,32 +13,22 @@ public class ClientKeyHandler {
 
     private static boolean wasTrashPressed = false;
     private static boolean wasBackpackPressed = false;
-    private static boolean wasPartyCreatePressed = false;
-    private static boolean wasPartyInvitePressed = false;
-    private static boolean wasPartySettingsPressed = false;
 
     @SubscribeEvent
-    public static void onKey(InputEvent.KeyInputEvent e) {
+    public static void onKey(InputEvent.Key e) { // KeyInputEvent -> Key に変更
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.screen != null) return;
 
-        handleKey(KeyBind.OPEN_TRASH.getKeyBinding(), wasTrashPressed, () -> sendCommand("/trash"));
+        handleKey(KeyBind.OPEN_TRASH.getKeyBinding(), wasTrashPressed, () -> sendCommand("trash"));
         wasTrashPressed = KeyBind.OPEN_TRASH.getKeyBinding().isDown();
 
-        handleKey(KeyBind.OPEN_BACKPACK.getKeyBinding(), wasBackpackPressed, () -> sendCommand("/backpack"));
+        handleKey(KeyBind.OPEN_BACKPACK.getKeyBinding(), wasBackpackPressed, () -> sendCommand("backpack"));
         wasBackpackPressed = KeyBind.OPEN_BACKPACK.getKeyBinding().isDown();
 
-        handleKey(KeyBind.QUICK_PARTY_CREATE.getKeyBinding(), wasPartyCreatePressed, PartyActions::quickCreateDefaultParty);
-        wasPartyCreatePressed = KeyBind.QUICK_PARTY_CREATE.getKeyBinding().isDown();
-
-        handleKey(KeyBind.QUICK_PARTY_INVITE.getKeyBinding(), wasPartyInvitePressed, PartyActions::quickInviteDefaultFriend);
-        wasPartyInvitePressed = KeyBind.QUICK_PARTY_INVITE.getKeyBinding().isDown();
-
-        handleKey(KeyBind.OPEN_PARTY_SETTINGS.getKeyBinding(), wasPartySettingsPressed, () -> mc.setScreen(new PartyMainScreen()));
-        wasPartySettingsPressed = KeyBind.OPEN_PARTY_SETTINGS.getKeyBinding().isDown();
     }
 
-    private static void handleKey(KeyBinding key, boolean wasDown, Runnable action) {
+    // KeyBinding -> KeyMapping に変更
+    private static void handleKey(KeyMapping key, boolean wasDown, Runnable action) {
         boolean now = key.isDown();
         if (now && !wasDown) {
             action.run();
@@ -49,11 +37,14 @@ public class ClientKeyHandler {
 
     private static void sendCommand(String cmd) {
         Minecraft mc = Minecraft.getInstance();
-        if (!cmd.startsWith("/")) cmd = "/" + cmd;
-        try {
-            mc.player.chat(cmd);
-        } catch (Throwable ex) {
-            try { mc.player.chat(cmd); } catch (Throwable ignored) {}
+        if (mc.player == null || mc.player.connection == null) return;
+
+        // / から始まる場合はスラッシュを削除してコマンド送信 API を使用
+        if (cmd.startsWith("/")) {
+            cmd = cmd.substring(1);
         }
+
+        // 1.20.4 では connection.sendUnsignedCommand を使用して署名なしコマンドを送信
+        mc.player.connection.sendUnsignedCommand(cmd);
     }
 }

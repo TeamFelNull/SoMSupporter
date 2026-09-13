@@ -1,11 +1,12 @@
 package dev.felnull.somsupporter.util;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.common.util.Constants;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -49,22 +50,32 @@ public final class SomUtils {
      * @return 説明文を改行ごとに区切った文字列のリスト
      */
     public static List<String> getLore(ItemStack stack) {
+        // hasTag() -> hasTag() (1.20.4 でもそのまま利用可能)
         if (!stack.hasTag()) {
             return ImmutableList.of();
         }
 
-        CompoundNBT itemTag = Objects.requireNonNull(stack.getTag());
-        if (!itemTag.contains("display", Constants.NBT.TAG_COMPOUND)) {
+        // CompoundNBT -> CompoundTag
+        CompoundTag itemTag = Objects.requireNonNull(stack.getTag());
+
+        // Constants.NBT.TAG_COMPOUND -> Tag.TAG_COMPOUND
+        if (!itemTag.contains("display", Tag.TAG_COMPOUND)) {
             return ImmutableList.of();
         }
 
-        CompoundNBT displayTag = itemTag.getCompound("display");
-        ListNBT nbtList = displayTag.getList("Lore", Constants.NBT.TAG_STRING);
+        CompoundTag displayTag = itemTag.getCompound("display");
+
+        // ListNBT -> ListTag, Constants.NBT.TAG_STRING -> Tag.TAG_STRING
+        ListTag nbtList = displayTag.getList("Lore", Tag.TAG_STRING);
 
         List<String> ret = new ArrayList<>();
         for (int i = 0; i < nbtList.size(); i++) {
-            ITextComponent textComp = Objects.requireNonNull(ITextComponent.Serializer.fromJson(nbtList.getString(i)));
-            ret.add(textComp.getString());
+            // ITextComponent -> Component
+            // Component.Serializer.fromJsonString(...) を使用
+            Component textComp = Component.Serializer.fromJson(nbtList.getString(i));
+            if (textComp != null) {
+                ret.add(textComp.getString());
+            }
         }
         return ret;
     }
@@ -102,6 +113,10 @@ public final class SomUtils {
 
         // 耐久値テキストから値を取得
         String[] numTexts = durabilityText.substring("・耐久値: ".length()).split("/");
+        if (numTexts.length < 2) {
+            return null;
+        }
+
         int remain = NumberUtils.toInt(numTexts[0], -1);
         int max = NumberUtils.toInt(numTexts[1], -1);
 

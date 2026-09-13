@@ -2,60 +2,49 @@ package dev.felnull.somsupporter.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.felnull.somsupporter.util.SomUtils;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
 public class ItemOverlayRenderer {
 
-    public static void render(ItemStack stack, int x, int y) {
-        renderSomDurabilityBar(stack, x, y);
+    // GuiGraphics を受け取る形に修正
+    public static void render(GuiGraphics guiGraphics, ItemStack stack, int x, int y) {
+        renderSomDurabilityBar(guiGraphics, stack, x, y);
     }
 
-    private static void renderSomDurabilityBar(ItemStack stack, int x, int y) {
+    private static void renderSomDurabilityBar(GuiGraphics guiGraphics, ItemStack stack, int x, int y) {
         List<String> loreTextList = SomUtils.getLore(stack);
         Pair<Integer, Integer> durability = SomUtils.getDurability(loreTextList);
 
         if (durability != null && durability.getLeft() < durability.getRight()) {
-            // RenderSystem.disableDepthTest();
-            RenderSystem.disableTexture();
-            RenderSystem.disableAlphaTest();
-            RenderSystem.disableBlend();
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferbuilder = tessellator.getBuilder();
             float health = 1f - ((float) durability.getLeft()) / ((float) durability.getRight());
             int len = Math.round(13.0f - health * 13.0f);
 
-            float h = (MathHelper.lerp(health, 345f, 365f) / 360f) % 1f;
-            float s = MathHelper.lerp(health, 71f, 40f) / 100f;
-            float v = MathHelper.lerp(health, 87f, 99f) / 100f;
-            int color = MathHelper.hsvToRgb(h, s, v);
+            // MathHelper -> Mth に変更
+            float h = (Mth.lerp(health, 345f, 365f) / 360f) % 1f;
+            float s = Mth.lerp(health, 71f, 40f) / 100f;
+            float v = Mth.lerp(health, 87f, 99f) / 100f;
 
-            double yOffset = stack.getItem().showDurabilityBar(stack) ? 2.5 : 0;
+            // HSV -> RGB (ARGB形式の int を取得)
+            int rgb = Mth.hsvToRgb(h, s, v);
+            int color = 0xFF000000 | rgb; // 不透明度 (Alpha = 255) を付与
 
-            fillRect(bufferbuilder, x + 2, (double) (y + 13) - yOffset, 13, 2, 0, 0, 0, 255);
-            fillRect(bufferbuilder, x + 2, (double) (y + 13) - yOffset, len, 1, color >> 16 & 255, color >> 8 & 255, color & 255, 255);
+            // Vanillaの耐久値バーが表示されている場合のオフセット
+            // 1.20.4 では stack.isBarVisible() または ItemExtension を利用
+            double yOffset = stack.isBarVisible() ? 2.5 : 0;
 
-            RenderSystem.enableBlend();
-            RenderSystem.enableAlphaTest();
-            RenderSystem.enableTexture();
-            //  RenderSystem.enableDepthTest();
+            int barX = x + 2;
+            int barY = (int) ((y + 13) - yOffset);
+
+            // GuiGraphics を使用した矩形描画 (z座標や描画設定のON/OFFは GuiGraphics が自動処理)
+            // 下地（黒背景）
+            guiGraphics.fill(barX, barY, barX + 13, barY + 2, 0xFF000000);
+            // バー（カラー）
+            guiGraphics.fill(barX, barY, barX + len, barY + 1, color);
         }
-    }
-
-    private static void fillRect(BufferBuilder bufferBuilder, int x, double y, int width, int height, int r, int g, int b, int a) {
-        float z = 400;
-        bufferBuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferBuilder.vertex(x, y, z).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(x, y + height, z).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(x + width, y + height, z).color(r, g, b, a).endVertex();
-        bufferBuilder.vertex(x + width, y, z).color(r, g, b, a).endVertex();
-        Tessellator.getInstance().end();
     }
 }

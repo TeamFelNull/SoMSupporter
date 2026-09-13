@@ -5,18 +5,17 @@ import dev.felnull.somsupporter.Somsupporter;
 import dev.felnull.somsupporter.gui.ConfirmEarlyLogoutScreen;
 import dev.felnull.somsupporter.sound.SomsoundEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
-import net.minecraft.client.gui.screen.IngameMenuScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -28,12 +27,14 @@ import java.util.regex.Pattern;
 public class ClientEvents {
     private static final List<String> notifierBlackList;
     private static final List<String> specialItemList;
-    static{
+
+    static {
         notifierBlackList = Arrays.asList(
                 "ブラックストーン",
                 "砂の記憶",
                 "星の欠片",
-                "星"
+                "星",
+                "エテナの欠片"
         );
         specialItemList = Arrays.asList(
                 "異物混入―紅―",
@@ -44,10 +45,10 @@ public class ClientEvents {
     static class Hit {
         final long tMs;
         final double dmg;
-        Hit(long tMs, double dmg){ this.tMs=tMs; this.dmg=dmg; }
+        Hit(long tMs, double dmg) { this.tMs = tMs; this.dmg = dmg; }
     }
 
-    // === 設定値（必要なら後でconfig化） ===
+    // === 設定値 ===
     private static final double WINDOW_SEC = 10.0;               // 直近DPSの窓
     private static final Pattern PAT_ARROW_NUM = Pattern.compile("▶\\s*([0-9]+(?:\\.[0-9]+)?)");
     private static final String[] IGNORE_PREFIXES = { "+[", "EXP" }; // ノイズ行を除外
@@ -69,8 +70,10 @@ public class ClientEvents {
     // === 入口: チャット受信 ===
     @SubscribeEvent
     public static void onChat(ClientChatReceivedEvent e) {
+        // e.getMessage().getString() -> e.getMessage().getString()
         String raw = e.getMessage().getString();
         String s = stripFormatting(raw);
+        if (s == null) return;
         s = s.trim();
         if (s.isEmpty()) return;
 
@@ -87,29 +90,31 @@ public class ClientEvents {
                     min = Math.min(min, v);
                 } catch (NumberFormatException ignored) {}
             }
-            // 何かしら%が見つかって、最小値が1未満なら通知＆音
-            // 右下トースト：アイテム名だけ抽出（最初の +[ ... ] 部分をそのまま使う）
-            int endIdx = s.indexOf(']') ;
+
+            // 右下トースト：アイテム名だけ抽出
+            int endIdx = s.indexOf(']');
             String title = (endIdx > 1) ? s.substring("+[".length(), endIdx) : s;
             if ((any && min <= 5.0) || specialItemList.contains(title)) {
-                if(notifierBlackList.contains(title)){ //ブラックリストアイテム除外
+                if (notifierBlackList.contains(title)) { // ブラックリストアイテム除外
                     return;
                 }
 
                 Notifier.push(String.format("%s 低確率: %.2f%%", title, min));
 
-                // 効果音（UIトースト音など好みで）
-                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                // 効果音
+                Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null) {
                     long now = System.currentTimeMillis();
                     if (now - lastSoundTime > SOUND_COOLDOWN_MS) {
-                        mc.getSoundManager().play(SimpleSound.forUI(SomsoundEvents.NOTIFY_LOWCHANCE.get(), 1.5F, 1.0F));
+                        // SimpleSound.forUI -> SimpleSoundInstance.forUI に変更
+                        mc.getSoundManager().play(SimpleSoundInstance.forUI(SomsoundEvents.NOTIFY_LOWCHANCE.get(), 1.0F, 1.0F));
                         lastSoundTime = now;
                     }
                 }
             }
             return; // 取得行はDPS集計に関係ないのでここで終わり
         }
+
         // --- DPS用処理 ---
         for (String pref : IGNORE_PREFIXES) {
             if (s.startsWith(pref)) return;
@@ -133,6 +138,7 @@ public class ClientEvents {
         if (text == null) return null;
         return text.replaceAll("§.", "");
     }
+
     // === 内部: 古いヒットを窓から除去 ===
     private static void prune(long nowMs) {
         long keep = (long)(WINDOW_SEC * 1000.0);
@@ -163,7 +169,7 @@ public class ClientEvents {
     public static double getSessionDps() {
         if (sessionStartMs == null) return 0.0;
         long now = System.currentTimeMillis();
-        double sec = (now - sessionStartMs)/1000.0;
+        double sec = (now - sessionStartMs) / 1000.0;
         return sec > 0 ? (sessionTotal / sec) : 0.0;
     }
 
@@ -179,7 +185,7 @@ public class ClientEvents {
 
     // === ログイン処理 ===
     @SubscribeEvent
-    public static void onClientLogin(ClientPlayerNetworkEvent.LoggedInEvent e) {
+    public static void onClientLogin(ClientPlayerNetworkEvent.LoggingIn e) { // LoggedInEvent -> LoggingIn に変更
         loginTimeMs = System.currentTimeMillis();
     }
 
@@ -189,53 +195,50 @@ public class ClientEvents {
         return elapsed <= DANGER_MS;
     }
 
+    // === GUI初期化イベント (1.20.4 仕様) ===
     @SubscribeEvent
-    public static void onInitGui(GuiScreenEvent.InitGuiEvent.Post event) {
-        Screen gui = event.getGui();
+    public static void onInitGui(ScreenEvent.Init.Post event) {
+        Screen gui = event.getScreen();
 
-        // ESCメニュー以外は無視
-        if (!(gui instanceof IngameMenuScreen)) return;
+        // IngameMenuScreen -> PauseScreen (ポーズ画面/ESCメニュー) に変更
+        if (!(gui instanceof PauseScreen)) return;
 
         // ログインから10秒を過ぎてたら警告しない
         if (!shouldWarnOnLogout()) return;
 
-        // ローカライズされた「切断」文字列（日本語環境なら「切断」になる）
+        // ローカライズされた「切断」文字列
         String disconnectText = I18n.get("menu.disconnect");
 
-        Widget target = null;
-        for (Widget w : event.getWidgetList()) {
-            if (w instanceof Button) {
-                ITextComponent msg = w.getMessage();
+        Button target = null;
+        // Widget/IGuiEventListener -> AbstractWidget で受ける
+        for (var listener : event.getListenersList()) {
+            if (listener instanceof Button button) {
+                Component msg = button.getMessage();
                 if (disconnectText.equals(msg.getString())) {
-                    target = w;
+                    target = button;
                     break;
                 }
             }
         }
 
         if (target == null) {
-            return; // ボタン見つからなかった
+            return; // ボタンが見つからなかった場合
         }
 
-        // 元の「切断」ボタンを削除
-        event.removeWidget(target);
+        // 元のボタンをリスナー一覧から削除
+        event.removeListener(target);
 
-        Button old = (Button) target;
+        Button old = target;
 
-        // 同じ位置・サイズ・ラベルのボタンを自前で追加
-        Button wrapped = new Button(
-                old.x,
-                old.y,
-                old.getWidth(),
-                old.getHeight(),
-                old.getMessage(),
-                b -> {
+        // 1.20.4 の Button.builder を使って同サイズの新しいボタンを生成
+        Button wrapped = Button.builder(old.getMessage(), b -> {
                     Minecraft mc = Minecraft.getInstance();
                     mc.setScreen(new ConfirmEarlyLogoutScreen(gui));
-                }
-        );
+                })
+                .bounds(old.getX(), old.getY(), old.getWidth(), old.getHeight())
+                .build();
 
-        event.addWidget(wrapped);
+        // イベントにボタンを追加
+        event.addListener(wrapped);
     }
-
 }
