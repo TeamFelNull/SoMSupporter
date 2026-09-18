@@ -12,6 +12,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -54,6 +56,7 @@ public class ClientEvents {
     private static final String[] IGNORE_PREFIXES = { "+[", "EXP" }; // ノイズ行を除外
 
     private static final Pattern PCT_IN_BRACKETS = Pattern.compile("\\[(\\d+(?:\\.\\d+)?)%\\]");
+    private static final Pattern PAT_DAMAGE_LOG = Pattern.compile("◀\\s*([0-9]+(?:\\.[0-9]+)?)\\s*\\[([^\\]]+)\\]");
 
     // === 状態 ===
     //・チャット系
@@ -76,6 +79,22 @@ public class ClientEvents {
         if (s == null) return;
         s = s.trim();
         if (s.isEmpty()) return;
+
+        // --- 被ダメージ音再生処理 ---
+        Matcher dm = PAT_DAMAGE_LOG.matcher(s);
+        if (dm.find()) {
+            String detail = dm.group(2).toUpperCase();
+
+            String type = detail.endsWith("%") ? "PERCENT" : detail;
+
+            switch (type) {
+                case "PERCENT" -> playDmgSound(SoundEvents.PLAYER_HURT, 1.0F, 1.0F);
+                case "FALL"    -> playDmgSound(SoundEvents.PLAYER_HURT, 1.0F, 1.0F);
+                case "LAVA"    -> playDmgSound(SoundEvents.PLAYER_HURT_ON_FIRE, 1.0F, 1.2F);
+                case "DROWNING"-> playDmgSound(SoundEvents.PLAYER_HURT_DROWN, 1.0F, 1.0F);
+                default        -> playDmgSound(SoundEvents.PLAYER_HURT, 1.0F, 0.8F);
+            }
+        }
 
         // --- レアドロップ通知 ---
         if (s.startsWith("+[")) {
@@ -195,22 +214,18 @@ public class ClientEvents {
         return elapsed <= DANGER_MS;
     }
 
-    // === GUI初期化イベント (1.20.4 仕様) ===
     @SubscribeEvent
     public static void onInitGui(ScreenEvent.Init.Post event) {
         Screen gui = event.getScreen();
 
-        // IngameMenuScreen -> PauseScreen (ポーズ画面/ESCメニュー) に変更
         if (!(gui instanceof PauseScreen)) return;
 
         // ログインから10秒を過ぎてたら警告しない
         if (!shouldWarnOnLogout()) return;
 
-        // ローカライズされた「切断」文字列
         String disconnectText = I18n.get("menu.disconnect");
 
         Button target = null;
-        // Widget/IGuiEventListener -> AbstractWidget で受ける
         for (var listener : event.getListenersList()) {
             if (listener instanceof Button button) {
                 Component msg = button.getMessage();
@@ -222,15 +237,13 @@ public class ClientEvents {
         }
 
         if (target == null) {
-            return; // ボタンが見つからなかった場合
+            return;
         }
 
-        // 元のボタンをリスナー一覧から削除
         event.removeListener(target);
 
         Button old = target;
 
-        // 1.20.4 の Button.builder を使って同サイズの新しいボタンを生成
         Button wrapped = Button.builder(old.getMessage(), b -> {
                     Minecraft mc = Minecraft.getInstance();
                     mc.setScreen(new ConfirmEarlyLogoutScreen(gui));
@@ -238,7 +251,13 @@ public class ClientEvents {
                 .bounds(old.getX(), old.getY(), old.getWidth(), old.getHeight())
                 .build();
 
-        // イベントにボタンを追加
         event.addListener(wrapped);
+    }
+
+    private static void playDmgSound(SoundEvent sound, float volume, float pitch) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && sound != null) {
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, pitch, volume));
+        }
     }
 }

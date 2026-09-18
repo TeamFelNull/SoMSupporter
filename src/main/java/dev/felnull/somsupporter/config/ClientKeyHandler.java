@@ -15,7 +15,7 @@ public class ClientKeyHandler {
     private static boolean wasBackpackPressed = false;
 
     @SubscribeEvent
-    public static void onKey(InputEvent.Key e) { // KeyInputEvent -> Key に変更
+    public static void onKey(InputEvent.Key e) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.screen != null) return;
 
@@ -27,7 +27,6 @@ public class ClientKeyHandler {
 
     }
 
-    // KeyBinding -> KeyMapping に変更
     private static void handleKey(KeyMapping key, boolean wasDown, Runnable action) {
         boolean now = key.isDown();
         if (now && !wasDown) {
@@ -39,12 +38,10 @@ public class ClientKeyHandler {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.player.connection == null) return;
 
-        // / から始まる場合はスラッシュを削除してコマンド送信 API を使用
         if (cmd.startsWith("/")) {
             cmd = cmd.substring(1);
         }
 
-        // 1.20.4 では connection.sendUnsignedCommand を使用して署名なしコマンドを送信
         mc.player.connection.sendUnsignedCommand(cmd);
     }
 }

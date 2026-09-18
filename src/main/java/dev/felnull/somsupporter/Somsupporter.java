@@ -20,18 +20,14 @@ public class Somsupporter {
 
     public Somsupporter() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        // サウンドイベントの登録
         SomsoundEvents.SOUNDS.register(modEventBus);
     }
 
-    // クライアント側の MOD イベントリスナー（キーバインド登録用）
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
 
         @SubscribeEvent
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-            // 1.20.4 では ClientRegistry ではなく RegisterKeyMappingsEvent を使用して登録します
             for (KeyBind keyBind : KeyBind.values()) {
                 event.register(keyBind.getKeyBinding());
             }

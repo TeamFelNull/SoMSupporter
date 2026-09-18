@@ -25,33 +25,7 @@ public enum KeyBind {
                     InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_DELETE), // デフォルトDeleteキー
                     "key.categories.somsupporter"
             )
-    ),
-    QUICK_PARTY_CREATE(
-            new KeyMapping(
-                    "key.somsupporter.quick_party_create",
-                    KeyConflictContext.IN_GAME,
-                    KeyModifier.NONE,
-                    InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_O),
-                    "key.categories.somsupporter"
-            )
-    ),
-    QUICK_PARTY_INVITE(
-            new KeyMapping(
-                    "key.somsupporter.quick_party_invite",
-                    KeyConflictContext.IN_GAME,
-                    KeyModifier.NONE,
-                    InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_I),
-                    "key.categories.somsupporter"
-            )
-    ),
-    OPEN_PARTY_SETTINGS(
-            new KeyMapping(
-                    "key.somsupporter.open_party_settings",
-                    KeyConflictContext.IN_GAME,
-                    KeyModifier.NONE,
-                    InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_P),
-                    "key.categories.somsupporter"
-            )
+
     );
 
     private final KeyMapping keyMapping;

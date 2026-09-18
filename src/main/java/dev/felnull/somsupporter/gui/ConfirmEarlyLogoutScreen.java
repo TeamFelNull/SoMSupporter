@@ -20,7 +20,6 @@ public class ConfirmEarlyLogoutScreen extends Screen {
     private final Screen parent;
 
     public ConfirmEarlyLogoutScreen(Screen parent) {
-        // StringTextComponent -> Component.literal
         super(Component.literal("ログアウト確認"));
         this.parent = parent;
     }
@@ -51,7 +50,6 @@ public class ConfirmEarlyLogoutScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        // 1.20.4 の背景描画処理 (MatrixStack から GuiGraphics に変更)
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
 
         // drawCenteredString -> guiGraphics.drawCenteredString
@@ -71,7 +69,6 @@ public class ConfirmEarlyLogoutScreen extends Screen {
                 0xFF5555
         );
 
-        // ボタン等のコンポーネント描画
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
     }
 

@@ -18,7 +18,7 @@ public class SomsoundEvents {
 
     public static final RegistryObject<SoundEvent> NOTIFY_LOWCHANCE =
             SOUNDS.register("notify_lowchance",
-                    () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(Somsupporter.MODID, "notify_lowchance")));
+                    () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(Somsupporter.MODID, "notify_lowchance")));
 
     // メインModクラスのコンストラクタなどから呼び出して登録する場合用
     public static void register(IEventBus eventBus) {
