@@ -52,7 +52,7 @@ public abstract class PauseScreenMixin extends Screen {
         int ri = renderables.indexOf(old);
         if (ri >= 0) renderables.set(ri, wrapped);
 
-        int ci = children.indexOf(old);
-        if (ci >= 0) children.set(ci, wrapped);
+        int childIdx = children.indexOf(old);
+        if (childIdx >= 0) children.set(childIdx, wrapped);
     }
 }

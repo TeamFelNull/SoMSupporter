@@ -8,7 +8,7 @@ import net.minecraft.sounds.SoundEvent;
 
 public class SomsoundEvents {
     public static final ResourceLocation NOTIFY_LOWCHANCE_ID =
-            ResourceLocation.fromNamespaceAndPath(Somsupporter.MODID, "notify_lowchance");
+            new ResourceLocation(Somsupporter.MODID, "notify_lowchance");
 
     public static final SoundEvent NOTIFY_LOWCHANCE =
             SoundEvent.createVariableRangeEvent(NOTIFY_LOWCHANCE_ID);
