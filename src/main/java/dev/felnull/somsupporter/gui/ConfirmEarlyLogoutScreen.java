@@ -1,21 +1,16 @@
 package dev.felnull.somsupporter.gui;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
-import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-
+@Environment(EnvType.CLIENT)
 public class ConfirmEarlyLogoutScreen extends Screen {
     private final Screen parent;
 
@@ -29,8 +24,6 @@ public class ConfirmEarlyLogoutScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        // 1.20.4 では Button.builder を使用してボタンを作成します
-        // addButton -> addRenderableWidget に変更
         this.addRenderableWidget(
                 Button.builder(Component.literal("キャンセル"), b -> {
                             if (this.minecraft != null) {
@@ -52,7 +45,6 @@ public class ConfirmEarlyLogoutScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
 
-        // drawCenteredString -> guiGraphics.drawCenteredString
         guiGraphics.drawCenteredString(
                 this.font,
                 "本当にログアウトしますか？",

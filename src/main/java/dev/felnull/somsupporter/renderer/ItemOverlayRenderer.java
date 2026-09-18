@@ -1,6 +1,5 @@
 package dev.felnull.somsupporter.renderer;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.felnull.somsupporter.util.SomUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;

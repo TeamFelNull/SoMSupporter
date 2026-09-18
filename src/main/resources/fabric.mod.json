@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "somsupporter",
+  "version": "${version}",
+  "name": "SoMSupporter",
+  "description": "DPSChecker&RareDropNotifier(0 < 1%)",
+  "authors": ["miyabi0333"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "main": ["dev.felnull.somsupporter.Somsupporter"],
+    "client": ["dev.felnull.somsupporter.SomsupporterClient"]
+  },
+  "mixins": [
+    {
+      "config": "somsupporter.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.20.4",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}

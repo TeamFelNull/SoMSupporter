@@ -2,12 +2,13 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.felnull.somsupporter.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "somsupporter.refmap.json",
-  "mixins": [
-  ],
+  "mixins": [],
   "client": [
-    "ItemRendererMixin"
+    "ItemRendererMixin",
+    "PauseScreenMixin",
+    "ScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
