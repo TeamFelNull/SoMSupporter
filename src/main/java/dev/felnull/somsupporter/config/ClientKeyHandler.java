@@ -1,37 +1,24 @@
 package dev.felnull.somsupporter.config;
 
-import dev.felnull.somsupporter.Somsupporter;
-import net.minecraft.client.KeyMapping;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Somsupporter.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Environment(EnvType.CLIENT)
 public class ClientKeyHandler {
 
-    private static boolean wasTrashPressed = false;
-    private static boolean wasBackpackPressed = false;
+    public static void register() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null || client.screen != null) return;
 
-    @SubscribeEvent
-    public static void onKey(InputEvent.Key e) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.screen != null) return;
-
-        handleKey(KeyBind.OPEN_TRASH.getKeyBinding(), wasTrashPressed, () -> sendCommand("trash"));
-        wasTrashPressed = KeyBind.OPEN_TRASH.getKeyBinding().isDown();
-
-        handleKey(KeyBind.OPEN_BACKPACK.getKeyBinding(), wasBackpackPressed, () -> sendCommand("backpack"));
-        wasBackpackPressed = KeyBind.OPEN_BACKPACK.getKeyBinding().isDown();
-
-    }
-
-    private static void handleKey(KeyMapping key, boolean wasDown, Runnable action) {
-        boolean now = key.isDown();
-        if (now && !wasDown) {
-            action.run();
-        }
+            while (KeyBind.OPEN_TRASH.getKeyBinding().consumeClick()) {
+                sendCommand("trash");
+            }
+            while (KeyBind.OPEN_BACKPACK.getKeyBinding().consumeClick()) {
+                sendCommand("backpack");
+            }
+        });
     }
 
     private static void sendCommand(String cmd) {
